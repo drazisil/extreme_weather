@@ -1,17 +1,21 @@
 package com.drazisil.extreme_weather;
 
 import com.drazisil.extreme_weather.entity.AdvancedLightingBoltEntity;
-import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.effect.LightningBoltEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.GameRules;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.RegistryObject;
@@ -37,11 +41,7 @@ public class ExtremeWeather
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
-
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES, MOD_ID);
-
-    public static final RegistryObject<Block> ROCK_BLOCK = BLOCKS.register("rock", () -> new Block(Block.Properties.of(Material.STONE)));
 
     public static final RegistryObject<EntityType<AdvancedLightingBoltEntity>> ADVANCED_BOLT = ENTITIES.register("advanced_bolt", () -> EntityType.Builder.of(AdvancedLightingBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID));
 
@@ -95,6 +95,25 @@ public class ExtremeWeather
     }
 
     @SubscribeEvent
+    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        // This event fires when the chunk looks to see where it can spawn new entities on every tick
+        // It is as close to an every chunk tick event as I've seen so far.
+
+        World world = event.player.level;
+
+        boolean isRaining = world.isRaining();
+        boolean isThundering = world.isThundering();
+
+        boolean shouldStrike = world.random.nextInt(1000) == 0;
+
+        if (isRaining && isThundering && shouldStrike) {
+
+            LOGGER.debug("Could Strike");
+
+        }
+    }
+
+    @SubscribeEvent
     public void onLightningSpawn(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
 
@@ -103,28 +122,19 @@ public class ExtremeWeather
             LightningBoltEntity lightningBoltEntity = (LightningBoltEntity) entity;
 
             World world = event.getWorld();
-            double x = lightningBoltEntity.getX();
-            double y = lightningBoltEntity.getY();
-            double z = lightningBoltEntity.getZ();
+            BlockPos position = lightningBoltEntity.blockPosition();
 
             LOGGER.info("Lighting bolt");
 
-//            AdvancedLightingBoltEntity newBolt = EntityType.LIGHTNING_BOLT.create(world);
-//            newBolt.setPos(x, y, z);
-        }
-    }
 
+            AdvancedLightingBoltEntity new_bolt = EntityType.Builder.of(AdvancedLightingBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID).create(world);
+            assert new_bolt != null;
+            new_bolt.moveTo(Vector3d.atBottomCenterOf(position));
+            boolean shouldSpawn = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
+            new_bolt.setVisualOnly(shouldSpawn);
+            world.addFreshEntity(new_bolt);
 
-
-
-    // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD
-    // Event bus for receiving Registry Events)
-    @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
-    public static class RegistryEvents {
-        @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            // register a new block here
-            LOGGER.info("HELLO from Register Block");
+            event.setCanceled((true));
         }
     }
 }
