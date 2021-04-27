@@ -1,24 +1,21 @@
 package com.drazisil.extreme_weather;
 
-import com.drazisil.extreme_weather.entity.AdvancedLightingBoltEntity;
+import com.drazisil.extreme_weather.client.AdvancedLightningBoltRender;
+import com.drazisil.extreme_weather.entity.AdvancedLightningBoltEntity;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -39,11 +36,14 @@ public class ExtremeWeather
 {
     public static final String MOD_ID = "extreme_weather";
     // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger();
+
+    public static final int STRIKE_CHANCE  = 600;
+    public static final boolean SHOULD_LIGHTNING_EXPLODE = true;
 
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITIES, MOD_ID);
 
-    public static final RegistryObject<EntityType<AdvancedLightingBoltEntity>> ADVANCED_BOLT = ENTITIES.register("advanced_bolt", () -> EntityType.Builder.of(AdvancedLightingBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID));
+    public static final RegistryObject<EntityType<AdvancedLightningBoltEntity>> ADVANCED_BOLT = ENTITIES.register("advanced_bolt", () -> EntityType.Builder.of(AdvancedLightningBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID));
 
     public ExtremeWeather() {
         // Register the setup method for modloading
@@ -72,6 +72,13 @@ public class ExtremeWeather
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().options);
+
+
+        LOGGER.info("Registering Model..");
+
+
+        RenderingRegistry.registerEntityRenderingHandler(EntityType.Builder.of(AdvancedLightningBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID), AdvancedLightningBoltRender::new);
+        LOGGER.info("Model registered");
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)
@@ -94,47 +101,57 @@ public class ExtremeWeather
         LOGGER.info("HELLO from server starting");
     }
 
-    @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        // This event fires when the chunk looks to see where it can spawn new entities on every tick
-        // It is as close to an every chunk tick event as I've seen so far.
-
-        World world = event.player.level;
-
-        boolean isRaining = world.isRaining();
-        boolean isThundering = world.isThundering();
-
-        boolean shouldStrike = world.random.nextInt(1000) == 0;
-
-        if (isRaining && isThundering && shouldStrike) {
-
-            LOGGER.debug("Could Strike");
-
-        }
-    }
+//    @SubscribeEvent
+//    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+//        // This event fires when the chunk looks to see where it can spawn new entities on every tick
+//        // It is as close to an every chunk tick event as I've seen so far.
+//
+//        PlayerEntity player = event.player;
+//        World world = player.level;
+//
+//        boolean isRaining = world.isRaining();
+//        boolean isThundering = world.isThundering();
+//
+//        boolean shouldStrike = world.random.nextInt(STRIKE_CHANCE) == 0;
+//
+//        if (isRaining && isThundering && shouldStrike) {
+//
+//            double x = player.getX();
+//            double y = player.getY();
+//            double z = player.getZ();
+//            BlockPos playerBlockPos = new BlockPos(x, y, z);
+//            Chunk chunk = (Chunk) world.getChunk(playerBlockPos);
+////            AdvancedLightingBoltEntity.strike(chunk, world);
+//
+//
+//        }
+//    }
 
     @SubscribeEvent
     public void onLightningSpawn(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
 
-        if (entity instanceof LightningBoltEntity && !(entity instanceof AdvancedLightingBoltEntity)) {
+        if (entity instanceof LightningBoltEntity && !(entity instanceof AdvancedLightningBoltEntity)) {
             // Cast to LightingBolt Entity
-            LightningBoltEntity lightningBoltEntity = (LightningBoltEntity) entity;
+            LightningBoltEntity old_bolt = (LightningBoltEntity) entity;
 
             World world = event.getWorld();
-            BlockPos position = lightningBoltEntity.blockPosition();
 
-            LOGGER.info("Lighting bolt");
+            BlockPos position = old_bolt.blockPosition();
 
+            LOGGER.info("Replacing old bolt " + position + entity.getStringUUID());
 
-            AdvancedLightingBoltEntity new_bolt = EntityType.Builder.of(AdvancedLightingBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID).create(world);
-            assert new_bolt != null;
-            new_bolt.moveTo(Vector3d.atBottomCenterOf(position));
-            boolean shouldSpawn = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
-            new_bolt.setVisualOnly(shouldSpawn);
-            world.addFreshEntity(new_bolt);
+            double x = old_bolt.getX();
+            double y = old_bolt.getY();
+            double z = old_bolt.getZ();
+            BlockPos blockPos = new BlockPos(x, y, z);
+            Chunk chunk = (Chunk) world.getChunk(blockPos);
+
+            AdvancedLightningBoltEntity.strike(chunk, world);
 
             event.setCanceled((true));
+
         }
+
     }
 }
