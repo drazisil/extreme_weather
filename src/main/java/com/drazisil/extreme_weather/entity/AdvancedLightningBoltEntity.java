@@ -10,6 +10,9 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.play.server.SSpawnObjectPacket;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -81,9 +84,9 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
                 double d0 = 3.0D;
                 List<Entity> list = this.level.getEntities(this, new AxisAlignedBB(this.getX() - 3.0D, this.getY() - 3.0D, this.getZ() - 3.0D, this.getX() + 3.0D, this.getY() + 6.0D + 3.0D, this.getZ() + 3.0D), Entity::isAlive);
 
-                for(Entity entity : list) {
+                for (Entity entity : list) {
                     if (!net.minecraftforge.event.ForgeEventFactory.onEntityStruckByLightning(entity, this))
-                        entity.thunderHit((ServerWorld)this.level, this);
+                        entity.thunderHit((ServerWorld) this.level, this);
                 }
 
                 if (this.cause != null) {
@@ -106,19 +109,19 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
         BlockPos blockpos = AdvancedLightningBoltEntity.findLightingTargetAround(world, world.getBlockRandomPos(i, 0, j, 15));
         if (world.isRainingAt(blockpos)) {
             DifficultyInstance difficultyinstance = world.getCurrentDifficultyAt(blockpos);
-            boolean flag1 = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && world.random.nextDouble() < (double)difficultyinstance.getEffectiveDifficulty() * 0.01D;
+            boolean flag1 = world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING) && world.random.nextDouble() < (double) difficultyinstance.getEffectiveDifficulty() * 0.01D;
 
             AdvancedLightningBoltEntity bolt = EntityType.Builder.of(AdvancedLightningBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID).create(world);
             Vector3d targetPos = Vector3d.atBottomCenterOf(blockpos);
             bolt.moveTo(targetPos);
             bolt.setVisualOnly(flag1);
             world.addFreshEntity(bolt);
-            ExtremeWeather.LOGGER.debug("Advanced Strike");
+            ExtremeWeather.EW_LOGGER.debug("Advanced Strike");
             if (SHOULD_LIGHTNING_EXPLODE) {
 //                Explosion.Mode explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(bolt.level, bolt) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
                 int explosionRadius = 3;
                 float f = 1.0F;
-                bolt.level.explode(bolt, bolt.getX(), bolt.getY(), bolt.getZ(), (float)explosionRadius * f, Explosion.Mode.DESTROY);
+                bolt.level.explode(bolt, bolt.getX(), bolt.getY(), bolt.getZ(), (float) explosionRadius * f, Explosion.Mode.DESTROY);
             }
 
         }
@@ -151,7 +154,7 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
                 this.level.setBlockAndUpdate(blockpos, blockstate);
             }
 
-            for(int i = 0; i < p_195053_1_; ++i) {
+            for (int i = 0; i < p_195053_1_; ++i) {
                 BlockPos blockpos1 = blockpos.offset(this.random.nextInt(3) - 1, this.random.nextInt(3) - 1, this.random.nextInt(3) - 1);
                 blockstate = AbstractFireBlock.getState(this.level, blockpos1);
                 if (this.level.getBlockState(blockpos1).isAir() && blockstate.canSurvive(this.level, blockpos1)) {
@@ -164,7 +167,21 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
 
     @OnlyIn(Dist.CLIENT)
     public boolean shouldRenderAtSqrDistance(double p_70112_1_) {
+        ExtremeWeather.EW_LOGGER.debug("Checking for shouldRender");
         double d0 = 64.0D * getViewScale();
         return p_70112_1_ < d0 * d0;
+    }
+
+    protected void defineSynchedData() {
+    }
+
+    protected void readAdditionalSaveData(CompoundNBT p_70037_1_) {
+    }
+
+    protected void addAdditionalSaveData(CompoundNBT p_213281_1_) {
+    }
+
+    public IPacket<?> getAddEntityPacket() {
+        return new SSpawnObjectPacket(this);
     }
 }

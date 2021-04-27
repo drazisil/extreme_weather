@@ -6,6 +6,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
 import net.minecraft.client.renderer.texture.AtlasTexture;
@@ -13,8 +14,11 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.client.registry.IRenderFactory;
 
 import java.util.Random;
+
+import static com.drazisil.extreme_weather.ExtremeWeather.EW_LOGGER;
 
 @OnlyIn(Dist.CLIENT)
 public class AdvancedLightningBoltRender extends EntityRenderer<AdvancedLightningBoltEntity> {
@@ -22,8 +26,8 @@ public class AdvancedLightningBoltRender extends EntityRenderer<AdvancedLightnin
         super(p_i46157_1_);
     }
 
-
     public void render(AdvancedLightningBoltEntity p_225623_1_, float p_225623_2_, float p_225623_3_, MatrixStack p_225623_4_, IRenderTypeBuffer p_225623_5_, int p_225623_6_) {
+        EW_LOGGER.debug("Starting render.");
         float[] afloat = new float[8];
         float[] afloat1 = new float[8];
         float f = 0.0F;
@@ -102,5 +106,15 @@ public class AdvancedLightningBoltRender extends EntityRenderer<AdvancedLightnin
     public ResourceLocation getTextureLocation(AdvancedLightningBoltEntity p_110775_1_) {
         return new ResourceLocation(ExtremeWeather.MOD_ID+":textures/entity/ew_bolt.png");
     }
+
+    public static class RenderFactory implements IRenderFactory<AdvancedLightningBoltEntity>
+    {
+
+        @Override
+        public EntityRenderer<? super AdvancedLightningBoltEntity> createRenderFor(EntityRendererManager entityRendererManager) {
+            return new AdvancedLightningBoltRender(entityRendererManager);
+        }
+    }
+
 
 }
