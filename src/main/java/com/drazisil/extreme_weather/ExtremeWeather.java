@@ -85,7 +85,7 @@ public class ExtremeWeather
         EW_LOGGER.info("Registering Renderer..");
 
 
-        RenderingRegistry.registerEntityRenderingHandler(EntityType.Builder.of(AdvancedLightningBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID), AdvancedLightningBoltRender::new);
+        RenderingRegistry.registerEntityRenderingHandler(ADVANCED_BOLT.get(), AdvancedLightningBoltRender::new);
 
         EW_LOGGER.info("Model registered");
     }
