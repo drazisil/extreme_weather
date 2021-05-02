@@ -1,5 +1,7 @@
 package com.drazisil.extreme_weather.event;
 
+import com.drazisil.extreme_weather.ModEntityType;
+import com.drazisil.extreme_weather.entity.AdvancedLightningBoltEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -30,7 +32,8 @@ public class ForgeEventBusSubscriber {
         if (item == Items.STICK && !world.isClientSide) {
             EW_LOGGER.info("stick");
 
-            LightningBoltEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
+            LightningBoltEntity oldBolt = EntityType.LIGHTNING_BOLT.create(world);
+            AdvancedLightningBoltEntity bolt = ModEntityType.ADVANCED_BOLT.get().create(world);
 
             Vector3d targetVec = player.position();
 
@@ -38,6 +41,8 @@ public class ForgeEventBusSubscriber {
 
             world.addFreshEntity(bolt);
             EW_LOGGER.info("new bolt added at " + targetVec);
+            EW_LOGGER.debug(oldBolt.getType());
+            EW_LOGGER.debug(bolt.getType());
         }
     }
 }

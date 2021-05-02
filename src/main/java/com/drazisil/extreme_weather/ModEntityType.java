@@ -16,9 +16,6 @@ public class ModEntityType {
     public static final RegistryObject<EntityType<AdvancedLightningBoltEntity>> ADVANCED_BOLT = ENTITY_TYPES.register("bolt",
             () -> EntityType.Builder.<AdvancedLightningBoltEntity>of(AdvancedLightningBoltEntity::new, EntityClassification.MISC)
                     .noSave()
-                    .sized(0.0F, 0.0F)
-                    .clientTrackingRange(16)
-                    .updateInterval(Integer.MAX_VALUE)
                     .build("bolt"));
 
 }
