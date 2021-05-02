@@ -4,11 +4,9 @@ import com.drazisil.extreme_weather.ExtremeWeather;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityClassification;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.LightningBoltEntity;
+import net.minecraft.entity.*;
+import net.minecraft.entity.ai.attributes.AttributeModifierMap;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
@@ -28,16 +26,16 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static com.drazisil.extreme_weather.ExtremeWeather.MOD_ID;
-import static com.drazisil.extreme_weather.ExtremeWeather.SHOULD_LIGHTNING_EXPLODE;
+import static com.drazisil.extreme_weather.ExtremeWeather.*;
 
-public class AdvancedLightningBoltEntity extends LightningBoltEntity {
+public class AdvancedLightningBoltEntity extends Entity {
     private int life;
+    public long seed;
     private boolean visualOnly;
     private int flashes;
     private ServerPlayerEntity cause;
 
-    public AdvancedLightningBoltEntity(EntityType<? extends LightningBoltEntity> p_i231491_1_, World p_i231491_2_) {
+    public AdvancedLightningBoltEntity(EntityType<? extends Entity> p_i231491_1_, World p_i231491_2_) {
         super(p_i231491_1_, p_i231491_2_);
         this.noCulling = true;
         this.life = 5;
@@ -47,6 +45,11 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
 
     public void setVisualOnly(boolean p_233623_1_) {
         this.visualOnly = p_233623_1_;
+    }
+
+    public static AttributeModifierMap.MutableAttribute createAttributes() {
+        return LivingEntity.createLivingAttributes()
+                .add(Attributes.MAX_HEALTH, 12.0D);
     }
 
     public void setCause(@Nullable ServerPlayerEntity p_204809_1_) {
@@ -85,8 +88,9 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
                 List<Entity> list = this.level.getEntities(this, new AxisAlignedBB(this.getX() - 3.0D, this.getY() - 3.0D, this.getZ() - 3.0D, this.getX() + 3.0D, this.getY() + 6.0D + 3.0D, this.getZ() + 3.0D), Entity::isAlive);
 
                 for (Entity entity : list) {
-                    if (!net.minecraftforge.event.ForgeEventFactory.onEntityStruckByLightning(entity, this))
-                        entity.thunderHit((ServerWorld) this.level, this);
+                    EW_LOGGER.debug(entity.getDisplayName() + " was hit by advanced lightning");
+//                    if (!net.minecraftforge.event.ForgeEventFactory.onEntityStruckByLightning(entity, this))
+//                        entity.thunderHit((ServerWorld) this.level, this);
                 }
 
                 if (this.cause != null) {
@@ -113,12 +117,12 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
 
             AdvancedLightningBoltEntity bolt = EntityType.Builder.of(AdvancedLightningBoltEntity::new, EntityClassification.MISC).noSave().sized(0.0F, 0.0F).clientTrackingRange(16).updateInterval(Integer.MAX_VALUE).build(MOD_ID).create(world);
             Vector3d targetPos = Vector3d.atBottomCenterOf(blockpos);
-            bolt.moveTo(targetPos);
+            assert bolt != null;
             bolt.setVisualOnly(flag1);
             world.addFreshEntity(bolt);
+            bolt.teleportTo(targetPos.x, targetPos.y, targetPos.z);
             ExtremeWeather.EW_LOGGER.debug("Advanced Strike");
             if (SHOULD_LIGHTNING_EXPLODE) {
-//                Explosion.Mode explosion$mode = net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(bolt.level, bolt) ? Explosion.Mode.DESTROY : Explosion.Mode.NONE;
                 int explosionRadius = 3;
                 float f = 1.0F;
                 bolt.level.explode(bolt, bolt.getX(), bolt.getY(), bolt.getZ(), (float) explosionRadius * f, Explosion.Mode.DESTROY);
@@ -175,13 +179,14 @@ public class AdvancedLightningBoltEntity extends LightningBoltEntity {
     protected void defineSynchedData() {
     }
 
-    protected void readAdditionalSaveData(CompoundNBT p_70037_1_) {
+    public void readAdditionalSaveData(CompoundNBT p_70037_1_) {
     }
 
-    protected void addAdditionalSaveData(CompoundNBT p_213281_1_) {
+    public void addAdditionalSaveData(CompoundNBT p_213281_1_) {
     }
 
     public IPacket<?> getAddEntityPacket() {
         return new SSpawnObjectPacket(this);
     }
 }
+

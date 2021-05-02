@@ -6,15 +6,12 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.culling.ClippingHelper;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererManager;
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.registry.IRenderFactory;
 
 import java.util.Random;
 
@@ -104,17 +101,6 @@ public class AdvancedLightningBoltRender extends EntityRenderer<AdvancedLightnin
     }
 
     public ResourceLocation getTextureLocation(AdvancedLightningBoltEntity p_110775_1_) {
-        return new ResourceLocation(ExtremeWeather.MOD_ID+":textures/entity/ew_bolt.png");
+        return new ResourceLocation(ExtremeWeather.MOD_ID,"textures/entity/bolt.png");
     }
-
-    public static class RenderFactory implements IRenderFactory<AdvancedLightningBoltEntity>
-    {
-
-        @Override
-        public EntityRenderer<? super AdvancedLightningBoltEntity> createRenderFor(EntityRendererManager entityRendererManager) {
-            return new AdvancedLightningBoltRender(entityRendererManager);
-        }
-    }
-
-
 }
