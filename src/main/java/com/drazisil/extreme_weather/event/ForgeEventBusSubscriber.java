@@ -1,8 +1,11 @@
 package com.drazisil.extreme_weather.event;
 
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.effect.LightningBoltEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,6 +29,15 @@ public class ForgeEventBusSubscriber {
 
         if (item == Items.STICK && !world.isClientSide) {
             EW_LOGGER.info("stick");
+
+            LightningBoltEntity bolt = EntityType.LIGHTNING_BOLT.create(world);
+
+            Vector3d targetVec = player.position();
+
+            bolt.teleportTo(targetVec.x, targetVec.y, targetVec.z);
+
+            world.addFreshEntity(bolt);
+            EW_LOGGER.info("new bolt added at " + targetVec);
         }
     }
 }
