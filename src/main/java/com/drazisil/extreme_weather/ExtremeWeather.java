@@ -12,8 +12,10 @@ public class ExtremeWeather
     // Directly reference a log4j logger.
     public static final Logger EW_LOGGER = LogManager.getLogger();
 
-    public static final int STRIKE_CHANCE  = 600;
-    public static final boolean SHOULD_LIGHTNING_EXPLODE = false;
+    public static final int STRIKE_CHANCE  = 1000;
+
+    public static boolean IS_WORLD_LOADED  = false;
+    public static final boolean SHOULD_LIGHTNING_EXPLODE = true;
 
 
     public ExtremeWeather() {
